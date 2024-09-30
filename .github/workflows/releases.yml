@@ -1,0 +1,87 @@
+name: Build and Release ColorTest
+
+on:
+  push:
+    tags:
+      - 'v*'   # Trigger only on tags like v1.0.0, v2.1, etc.
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Compile on Linux and macOS using gcc
+    - name: Compile for Linux and macOS
+      if: matrix.os != 'windows-latest'
+      run: |
+        gcc -o colortest-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'mac' }} colortest.c
+
+    # Install MSYS2 and compile on Windows
+    - name: Install MSYS2
+      if: matrix.os == 'windows-latest'
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: mingw-w64-x86_64-gcc
+
+    - name: Compile for Windows
+      if: matrix.os == 'windows-latest'
+      run: |
+        gcc -o colortest-windows.exe colortest.c
+      shell: msys2 {0}
+
+    # Archive and upload artifacts for all platforms
+    - name: Archive Linux and macOS artifacts
+      if: matrix.os != 'windows-latest'
+      run: |
+        zip colortest-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'mac' }}.zip colortest-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'mac' }}
+    
+    - name: Archive Windows artifacts
+      if: matrix.os == 'windows-latest'
+      run: |
+        zip colortest-windows.zip colortest-windows.exe
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: colortest-${{ matrix.os == 'ubuntu-latest' && 'linux' || matrix.os == 'macos-latest' && 'mac' || 'windows' }}
+        path: colortest*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Linux artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: colortest-linux
+
+    - name: Download macOS artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: colortest-mac
+
+    - name: Download Windows artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: colortest-windows
+
+    - name: Create GitHub Release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ github.ref }}
+        name: ${{ github.ref }}
+        body: |
+          Automatic build of ColorTest for Linux, macOS, and Windows.
+        files: |
+          colortest-linux.zip
+          colortest-mac.zip
+          colortest-windows.zip
+        draft: false
+        prerelease: false
