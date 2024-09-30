@@ -36,33 +36,27 @@ jobs:
         gcc -o colortest-windows.exe colortest.c
       shell: msys2 {0}
 
-    # Archive Linux and macOS artifacts using zip
+    # Archive and upload artifacts for all platforms
     - name: Archive Linux and macOS artifacts
       if: matrix.os != 'windows-latest'
       run: |
         zip colortest-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'mac' }}.zip colortest-${{ matrix.os == 'ubuntu-latest' && 'linux' || 'mac' }}
-
-    # Archive Windows artifacts using Compress-Archive (PowerShell)
+    
     - name: Archive Windows artifacts
       if: matrix.os == 'windows-latest'
       run: |
-        Compress-Archive -Path colortest-windows.exe -DestinationPath colortest-windows.zip
-      shell: pwsh
+        zip colortest-windows.zip colortest-windows.exe
 
-    - name: Upload artifacts
+    - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: colortest-${{ matrix.os == 'ubuntu-latest' && 'linux' || matrix.os == 'macos-latest' && 'mac' || 'windows' }}
-        path: colortest*.zip
+        path: colortest*
 
   release:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
     - name: Download Linux artifact
       uses: actions/download-artifact@v3
       with:
@@ -78,11 +72,16 @@ jobs:
       with:
         name: colortest-windows
 
-    - name: Create GitHub Release using gh
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh release create ${{ github.ref }} \
-          colortest-linux.zip colortest-mac.zip colortest-windows.zip \
-          --title "${{ github.ref }}" \
-          --notes "Automatic build of ColorTest for Linux, macOS, and Windows."
+    - name: Create GitHub Release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ github.ref }}
+        name: ${{ github.ref }}
+        body: |
+          Automatic build of ColorTest for Linux, macOS, and Windows.
+        files: |
+          colortest-linux.zip
+          colortest-mac.zip
+          colortest-windows.zip
+        draft: false
+        prerelease: false

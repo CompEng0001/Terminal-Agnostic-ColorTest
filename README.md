@@ -1,8 +1,8 @@
 # Terminal-Agnostic-ColorTest
 
-![Build Status](https://github.com/CompEng0001/Terminal-Agnostic-ColorTest/actions/workflows/release.yml/badge.svg)
+![Build Status](https://github.com/CompEng0001/Terminal-Agnostic-ColorTest/actions/workflows/releases.yml/badge.svg)
 ![Latest Release](https://img.shields.io/github/v/release/CompEng0001/Terminal-Agnostic-ColorTest)
-![License](https://img.shields.io/github/license/CompEng0001/Terminal-Agnostic-ColorTest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
 <div align=center>
